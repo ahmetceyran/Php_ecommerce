@@ -8,6 +8,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Order;
+use Illuminate\Contracts\Session\Session as SessionSession;
+use Illuminate\Support\Facades\Session as FacadesSession;
+use Illuminate\Support\Facades\Session;
+use Stripe;
 
 class HomeController extends Controller
 {
@@ -153,5 +157,67 @@ class HomeController extends Controller
         return redirect()->back()->with('message', 'Your order has been received. We will connect with you soon :)');
 
 
+    }
+
+    public function stripe($totalprice)
+    {
+        
+        return view('home.stripe', compact('totalprice'));
+    }
+
+    public function stripePost(Request $request, $totalprice)
+    {
+        
+        Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+    
+        Stripe\Charge::create ([
+                "amount" => $totalprice * 100,
+                "currency" => "usd",
+                "source" => $request->stripeToken,
+                "description" => "Test payment from itsolutionstuff.com." 
+        ]);
+
+
+        $user=Auth::user();
+
+        $userid=$user->id;
+
+        $data=cart::where('user_id','=',$userid)->get();
+
+        foreach($data as $data)
+        {
+            $order=new order;
+
+            $order->name=$data->name;
+            $order->email=$data->email;
+            $order->phone=$data->phone;
+            $order->address=$data->address;
+            $order->user_id=$data->user_id;
+            $order->product_title=$data->product_title;
+            $order->price=$data->price;
+            $order->quantity=$data->quantity;
+            $order->image=$data->image;
+            $order->product_id=$data->product_id;
+            $order->payment_status='Paid';
+            $order->delivery_status='processing';
+
+            $order->save();
+
+
+            $cart_id=$data->id;
+            $cart=cart::find($cart_id);
+            $cart->delete();
+
+            $product_id=$data->product_id;
+            $product=product::find($product_id);
+            $product->quantity=$product->quantity - $data->quantity;
+            $product->save();
+
+        }
+
+      
+        Session::flash('success', 'Payment successful!');
+              
+        return back();
     }
 }

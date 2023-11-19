@@ -28,7 +28,10 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{url('show_cart')}}">Cart</a>
-                 </li>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{url('show_orders')}}">Orders</a>
+                </li>
 
                 <form class="form-inline">
                     <button class="btn  my-2 my-sm-0 nav_search-btn" type="submit">

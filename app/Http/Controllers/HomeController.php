@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cart;
+use App\Models\Comment;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Order;
+use App\Models\Reply;
 use Illuminate\Contracts\Session\Session as SessionSession;
 use Illuminate\Support\Facades\Session as FacadesSession;
 use Illuminate\Support\Facades\Session;
@@ -46,15 +48,20 @@ class HomeController extends Controller
         {
             $product = Product::paginate(9);
 
-            return view('home.userpage', compact('product'));
+            $comment=comment::orderby('id', 'desc')->get();
+
+            $reply=reply::all();
+
+            return view('home.userpage', compact('product', 'comment', 'reply'));
         }
     }
 
     public function index()
     {
         $product = Product::paginate(9);
-
-        return view('home.userpage', compact('product'));
+        $comment=comment::orderby('id', 'desc')->get();
+        $reply=reply::all();
+        return view('home.userpage', compact('product', 'comment', 'reply'));
     }
 
     public function product_details($id)
@@ -276,6 +283,61 @@ class HomeController extends Controller
         $order->save();
 
         return redirect()->back();
+
+    }
+
+    public function add_comment(Request $request)
+    {
+
+        if(Auth::id())
+        {
+
+            $comment=new comment;
+
+            $comment->name=Auth::user()->name;
+            $comment->user_id=Auth::user()->id;
+            $comment->comment=$request->comment;
+
+            $comment->save();
+
+            return redirect()->back();
+
+        }
+
+        else
+        {
+
+            return redirect('login');
+        }
+
+    }
+
+    public function add_reply(Request $request)
+    {
+
+        if(Auth::id())
+        {
+            $reply=new reply;
+
+            $reply->name=Auth::user()->name;
+            $reply->user_id=Auth::user()->id;
+            
+            $reply->comment_id=$request->commentId;
+            $reply->reply=$request->reply;
+
+            $reply->save();
+
+            return redirect()->back();
+
+        }
+
+        else
+        {
+
+            return redirect('login');
+
+        }
+
 
     }
 
